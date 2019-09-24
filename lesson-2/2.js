@@ -8,6 +8,7 @@ class TimersManager {
       job: "function",
     };
     this.started = false;
+    this.logs = [];
   }
 
   _findTimer(name) {
@@ -54,13 +55,19 @@ class TimersManager {
     }
   }
 
+  _handleLog(timer) {
+    this._log(timer);
+
+    return () => timer.job(...timer.options);
+  }
+
   _startTimer(name) {
     const timer = this._findTimer(name);
 
     if (timer.interval) {
-      timer.task = setInterval(() => timer.job(...timer.options), timer.delay);
+      timer.task = setInterval(this._handleLog(timer), timer.delay);
     } else {
-      timer.task = setTimeout(() => timer.job(...timer.options), timer.delay);
+      timer.task = setTimeout(this._handleLog(timer), timer.delay);
     }
     return this;
   }
@@ -75,6 +82,15 @@ class TimersManager {
       clearTimeout(timer.task);
       timer.task = null;
     }
+  }
+
+  _log(timer) {
+    this.logs.push({
+      name: timer.name,
+      in: timer.options,
+      out: timer.job(...timer.options),
+      created: new Date(Date.now()),
+    });
   }
 
   add(timer, ...options) {
@@ -126,5 +142,9 @@ class TimersManager {
       return null;
     }
     this._startTimer(name);
+  }
+
+  print() {
+    return this.logs;
   }
 }
