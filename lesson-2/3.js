@@ -56,9 +56,15 @@ class TimersManager {
   }
 
   _handleLog(timer) {
-    this._log(timer);
+    return () => {
+      try {
+        timer.job(...timer.options);
 
-    return () => timer.job(...timer.options);
+        this._log(timer);
+      } catch (error) {
+        this._log(timer, error);
+      }
+    };
   }
 
   _startTimer(name) {
@@ -84,13 +90,22 @@ class TimersManager {
     }
   }
 
-  _log(timer) {
-    this.logs.push({
+  _log(timer, error = null) {
+    const out = error ? null : timer.job(...timer.options);
+    const log = {
       name: timer.name,
       in: timer.options,
-      out: timer.job(...timer.options),
+      out,
       created: new Date(Date.now()),
-    });
+    };
+
+    if (!error) {
+      this.logs.push(log);
+    } else {
+      const { name, message, stack } = error;
+
+      this.logs.push({ ...log, error: { name, message, stack } });
+    }
   }
 
   add(timer, ...options) {
