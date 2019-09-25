@@ -9,12 +9,14 @@ class Bank extends EventEmitter {
     this.userTypes = {
       name: "string",
       balance: "number",
+      limit: "function",
     };
 
     this.on("add", this._add);
     this.on("get", this._get);
     this.on("withdraw", this._withdraw);
     this.on("send", this._send);
+    this.on("changeLimit", this._changeLimit);
   }
 
   register(user) {
@@ -38,14 +40,13 @@ class Bank extends EventEmitter {
   _get(id, cb) {
     const currentUser = this._getUser(id);
 
-    if (typeof cb !== "function") {
-      this.emit("error", new Error("Callback must be a function"));
-    }
+    this._validateFunction(cb);
     cb(currentUser.balance);
   }
 
   _withdraw(id, sum) {
     const currentUser = this._getUser(id);
+
     this._validateSum(sum);
     this._withdrawSum(currentUser, sum);
   }
@@ -53,10 +54,23 @@ class Bank extends EventEmitter {
   _send(senderId, receiverId, sum) {
     const sender = this._getUser(senderId);
     const receiver = this._getUser(receiverId);
-    this._validateSum(sum);
 
+    this._validateSum(sum);
     this._withdrawSum(sender, sum);
     this._addSum(receiver, sum);
+  }
+
+  _changeLimit(id, cb) {
+    const currentUser = this._getUser(id);
+
+    this._validateFunction(cb);
+
+    this.users = this.users.map(user => {
+      if (user.id === currentUser.id) {
+        user.limit = cb;
+      }
+      return user;
+    });
   }
 
   _getUser(id) {
@@ -109,6 +123,12 @@ class Bank extends EventEmitter {
     }
   }
 
+  _validateFunction(cb) {
+    if (typeof cb !== "function") {
+      this.emit("error", new Error("Callback must be a function"));
+    }
+  }
+
   _addSum(currentUser, sum) {
     this.users = this.users.map(user => {
       if (user.id === currentUser.id) {
@@ -119,6 +139,9 @@ class Bank extends EventEmitter {
   }
 
   _withdrawSum(currentUser, sum) {
+    if (!currentUser.limit(sum, currentUser.balance, currentUser.balance - sum)) {
+      this.emit("error", new Error("Limit is exceeded"));
+    }
     this.users = this.users.map(user => {
       if (user.id === currentUser.id) {
         if (user.balance - sum >= 0) {
