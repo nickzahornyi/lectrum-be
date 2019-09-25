@@ -14,6 +14,7 @@ class Bank extends EventEmitter {
     this.on("add", this._add);
     this.on("get", this._get);
     this.on("withdraw", this._withdraw);
+    this.on("send", this._send);
   }
 
   register(user) {
@@ -23,6 +24,7 @@ class Bank extends EventEmitter {
     const id = crypto.randomBytes(16).toString("hex");
 
     this.users.push({ ...user, id });
+
     return id;
   }
 
@@ -46,6 +48,15 @@ class Bank extends EventEmitter {
     const currentUser = this._getUser(id);
     this._validateSum(sum);
     this._withdrawSum(currentUser, sum);
+  }
+
+  _send(senderId, receiverId, sum) {
+    const sender = this._getUser(senderId);
+    const receiver = this._getUser(receiverId);
+    this._validateSum(sum);
+
+    this._withdrawSum(sender, sum);
+    this._addSum(receiver, sum);
   }
 
   _getUser(id) {
