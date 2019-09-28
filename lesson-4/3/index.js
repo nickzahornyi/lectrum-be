@@ -1,6 +1,7 @@
 const Ui = require("./Ui");
 const Guardian = require("./Guardian");
 const AccountManager = require("./AccountManager");
+const Logger = require("./Logger");
 
 const customers = [
     {
@@ -18,5 +19,6 @@ const customers = [
 const ui = new Ui(customers);
 const guardian = new Guardian();
 const manager = new AccountManager();
+const logger = new Logger();
 
-ui.pipe(guardian).pipe(manager);
+ui.pipe(guardian).pipe(logger).pipe(manager);
