@@ -12,7 +12,8 @@ class Ui extends Readable {
 
     init() {
         this.on("data", chunk => {
-            this._validate(chunk);
+            this._validatePayload(chunk.payload);
+            this._validateMeta(chunk.meta);
         });
     }
 
@@ -26,27 +27,38 @@ class Ui extends Readable {
         }
     }
 
-    _validate(chunk) {
+    _validatePayload(payload) {
         const requiredFields = ["name", "email", "password"];
 
-        if (typeof chunk !== "object") {
+        if (typeof payload !== "object") {
             throw new Error("Data must be an object");
         }
 
         requiredFields.forEach(field => {
-            if (!chunk.hasOwnProperty(field)) {
+            if (!payload.hasOwnProperty(field)) {
                 throw new Error(`Field ${field} is required`);
             }
         });
 
-        for (const key in chunk) {
+        for (const key in payload) {
             if (!requiredFields.some(field => field === key)) {
                 throw new Error(`Only ${requiredFields.toString()} are allowed`);
             }
 
-            if (typeof chunk[key] !== "string") {
+            if (typeof payload[key] !== "string") {
                 throw new Error(`Field ${key} must be a string`);
             }
+        }
+    }
+    _validateMeta(meta) {
+        const { algorithm } = meta;
+
+        if (typeof meta !== "object") {
+            throw new Error("Meta must be an object");
+        }
+
+        if (!algorithm || typeof algorithm !== "string") {
+            throw new Error("Algorithm is required and must be a string");
         }
     }
 }

@@ -1,24 +1,22 @@
 const Ui = require("./Ui");
-const Guardian = require("./Guardian");
+const Decryptor = require("./Decryptor");
 const AccountManager = require("./AccountManager");
-const Logger = require("./Logger");
 
 const customers = [
     {
-        name: "Pitter Black",
-        email: "pblack@email.com",
-        password: "pblack_123",
-    },
-    {
-        name: "Oliver White",
-        email: "owhite@email.com",
-        password: "owhite_456",
+        payload: {
+            name: "Pitter Black",
+            email: "70626c61636b40656d61696c2e636f6d",
+            password: "70626c61636b5f313233",
+        },
+        meta: {
+            algorithm: "hex",
+        },
     },
 ];
 
 const ui = new Ui(customers);
-const guardian = new Guardian();
+const decryptor = new Decryptor();
 const manager = new AccountManager();
-const logger = new Logger();
 
-ui.pipe(guardian).pipe(logger).pipe(manager);
+ui.pipe(decryptor).pipe(manager);
